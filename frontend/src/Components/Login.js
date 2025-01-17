@@ -34,7 +34,7 @@ const Login = () => {
       // Authenticate the user with email and password
       await signInWithEmailAndPassword(auth, email, password);
 
-      navigate("/profile");
+      navigate("/posts");
     } catch (err) {
       setError(err.message);
     }
