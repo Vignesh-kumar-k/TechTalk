@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { storage, db } from "../FireBase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "../FireBase";
 import { addDoc, collection, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import axios from "axios";
 
 const Posts = ({ user }) => {
   const [content, setContent] = useState("");
@@ -26,6 +26,23 @@ const Posts = ({ user }) => {
     fetchUsername();
   }, [user]);
 
+  const uploadImageToCloudinary = async (image) => {
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("upload_preset", process.env.REACT_APP_UPLOAD_PRESET); 
+    
+    try {
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUD_NAME}/image/upload`,
+        formData
+      );
+      return response.data.secure_url; 
+    } catch (error) {
+      console.error("Error uploading to Cloudinary: ", error);
+      throw error;
+    }
+  };
+
   const handlePostSubmit = async (e) => {
     e.preventDefault();
     if (!content && !codeSnippet && !image) return;
@@ -34,18 +51,16 @@ const Posts = ({ user }) => {
 
     let imageUrl = "";
     if (image) {
-      const imageRef = ref(storage, `posts/${user.uid}/${Date.now()}-${image.name}`);
-      await uploadBytes(imageRef, image);
-      imageUrl = await getDownloadURL(imageRef);
+      imageUrl = await uploadImageToCloudinary(image); 
     }
 
     try {
       await addDoc(collection(db, "posts"), {
         authorId: user.uid,
-        username: username || "Anonymous", 
+        username: username || "Anonymous",
         content,
         codeSnippet,
-        imageUrl,
+        imageUrl, 
         timestamp: serverTimestamp(),
         likes: [],
         comments: [],
