@@ -18,7 +18,6 @@ const SignUp = () => {
     setError("");
 
     try {
-      // Check if the username already exists
       const usernameRef = doc(firestore, "usernames", username);
       const usernameSnap = await getDoc(usernameRef);
 
@@ -27,10 +26,8 @@ const SignUp = () => {
         return;
       }
 
-      // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Save username and UID in Firestore
       const uid = userCredential.user.uid;
       await setDoc(doc(firestore, "usernames", username), { uid });
       await setDoc(doc(firestore, "users", uid), { email, username });

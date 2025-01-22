@@ -17,7 +17,6 @@ const Login = () => {
     setError("");
 
     try {
-      // Retrieve the UID from the username
       const usernameDoc = await getDoc(doc(firestore, "usernames", username));
 
       if (!usernameDoc.exists()) {
@@ -27,11 +26,9 @@ const Login = () => {
 
       const { uid } = usernameDoc.data();
 
-      // Retrieve the email from the UID
       const userDoc = await getDoc(doc(firestore, "users", uid));
       const { email } = userDoc.data();
 
-      // Authenticate the user with email and password
       await signInWithEmailAndPassword(auth, email, password);
 
       navigate("/posts");

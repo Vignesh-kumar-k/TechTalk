@@ -15,7 +15,7 @@ import ReactMarkdown from "react-markdown";
 
 const FeedPage = ({ user }) => {
   const [posts, setPosts] = useState([]);
-  const [commentText, setCommentText] = useState({}); // To manage comment input for each post
+  const [commentText, setCommentText] = useState({}); 
 
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
@@ -30,7 +30,6 @@ const FeedPage = ({ user }) => {
     return () => unsubscribe();
   }, []);
 
-  // Handle Like
   const handleLike = async (postId) => {
     const postRef = doc(db, "posts", postId);
     const post = await getDoc(postRef);
@@ -43,7 +42,6 @@ const FeedPage = ({ user }) => {
     }
   };
 
-  // Handle Comment
   const handleComment = async (postId) => {
     const postRef = doc(db, "posts", postId);
     const post = await getDoc(postRef);

@@ -10,11 +10,10 @@ const Posts = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
 
-  // Fetch the username from the 'usernames' collection
   useEffect(() => {
     const fetchUsername = async () => {
       if (user) {
-        const userRef = doc(db, "usersusernames", user.uid);
+        const userRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           setUsername(userDoc.data().username);
@@ -43,7 +42,7 @@ const Posts = ({ user }) => {
     try {
       await addDoc(collection(db, "posts"), {
         authorId: user.uid,
-        username: username || "Anonymous",  // Use the fetched username
+        username: username || "Anonymous", 
         content,
         codeSnippet,
         imageUrl,

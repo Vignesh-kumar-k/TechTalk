@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./FireBase"; // Import Firebase auth instance
+import { auth } from "./FireBase"; 
 import Login from "./Components/Login";
 import Signin from "./Components/Signin";
 import PrivateRoute from "./Components/PrivateRoute";
@@ -16,15 +16,16 @@ const App = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Current user", currentUser); 
       setUser(currentUser);
       setLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe(); 
   }, []);
 
   if (loading) {
-    return <p>Loading...</p>; // Add a loader while user authentication is being checked
+    return <p>Loading...</p>; 
   }
 
   return (
