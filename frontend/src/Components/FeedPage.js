@@ -15,9 +15,10 @@ import ReactMarkdown from "react-markdown";
 
 const FeedPage = ({ user }) => {
   const [posts, setPosts] = useState([]);
-  const [commentText, setCommentText] = useState({}); // To manage comment input for each post
+  const [commentText, setCommentText] = useState({}); // Manage comment input for each post
 
   useEffect(() => {
+    // Fetch posts from Firestore in descending order of timestamp
     const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const postsData = snapshot.docs.map((doc) => ({
@@ -30,35 +31,62 @@ const FeedPage = ({ user }) => {
     return () => unsubscribe();
   }, []);
 
-  // Handle Like
+  // Handle Like functionality
   const handleLike = async (postId) => {
-    const postRef = doc(db, "posts", postId);
-    const post = await getDoc(postRef);
-    const likes = post.data().likes;
+    try {
+      const postRef = doc(db, "posts", postId);
+      const post = await getDoc(postRef);
+      const likes = post.data().likes;
 
-    if (likes.includes(user.uid)) {
-      await updateDoc(postRef, { likes: arrayRemove(user.uid) });
-    } else {
-      await updateDoc(postRef, { likes: arrayUnion(user.uid) });
+      if (likes.includes(user.uid)) {
+        await updateDoc(postRef, { likes: arrayRemove(user.uid) });
+      } else {
+        await updateDoc(postRef, { likes: arrayUnion(user.uid) });
+      }
+    } catch (error) {
+      console.error("Error handling like:", error);
     }
   };
 
-  // Handle Comment
+  // Handle Comment functionality
   const handleComment = async (postId) => {
-    const postRef = doc(db, "posts", postId);
-    const post = await getDoc(postRef);
-    const comments = post.data().comments;
-
-    const newComment = {
-      userId: user.uid,
-      username: user.username,
-      text: commentText[postId] || "",
-      timestamp: new Date().toISOString(),
-    };
-
-    await updateDoc(postRef, { comments: [...comments, newComment] });
-    setCommentText((prev) => ({ ...prev, [postId]: "" })); // Clear input
+    try {
+      const postRef = doc(db, "posts", postId);
+      const post = await getDoc(postRef);
+      const postData = post.data();
+  
+      // Ensure comments field is initialized as an array
+      const comments = postData.comments || [];
+  
+      // Construct the new comment
+      const newComment = {
+        userId: user?.uid || "unknown",
+        username: user?.username || "Anonymous", // Ensure proper username fetching
+        text: commentText[postId]?.trim() || "",
+        timestamp: new Date().toISOString(),
+      };
+  
+      // Prevent adding empty comments
+      if (!newComment.text) {
+        console.error("Comment text is empty");
+        return;
+      }
+  
+      // Debugging logs (optional)
+      console.log("Post ID:", postId);
+      console.log("Existing comments:", comments);
+      console.log("New comment:", newComment);
+  
+      // Update the post with the new comment
+      await updateDoc(postRef, { comments: [...comments, newComment] });
+  
+      // Clear the comment input for the post
+      setCommentText((prev) => ({ ...prev, [postId]: "" }));
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
+  
 
   return (
     <div className="feed-page">
@@ -67,10 +95,12 @@ const FeedPage = ({ user }) => {
           <h3>{post.username}</h3>
           <p>{post.content}</p>
 
+          {/* Render Markdown for code snippets */}
           {post.codeSnippet && (
             <ReactMarkdown>{post.codeSnippet}</ReactMarkdown>
           )}
 
+          {/* Render image if present */}
           {post.imageUrl && <img src={post.imageUrl} alt="Post attachment" />}
 
           <div className="post-actions">
