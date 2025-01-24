@@ -31,32 +31,48 @@ const FeedPage = ({ user }) => {
   }, []);
 
   const handleLike = async (postId) => {
-    const postRef = doc(db, "posts", postId);
-    const post = await getDoc(postRef);
-    const likes = post.data().likes;
+    try {
+      const postRef = doc(db, "posts", postId);
+      const post = await getDoc(postRef);
+      const likes = post.data().likes;
 
-    if (likes.includes(user.uid)) {
-      await updateDoc(postRef, { likes: arrayRemove(user.uid) });
-    } else {
-      await updateDoc(postRef, { likes: arrayUnion(user.uid) });
+      if (likes.includes(user.uid)) {
+        await updateDoc(postRef, { likes: arrayRemove(user.uid) });
+      } else {
+        await updateDoc(postRef, { likes: arrayUnion(user.uid) });
+      }
+    } catch (error) {
+      console.error("Error handling like:", error);
     }
   };
 
   const handleComment = async (postId) => {
-    const postRef = doc(db, "posts", postId);
-    const post = await getDoc(postRef);
-    const comments = post.data().comments;
-
-    const newComment = {
-      userId: user.uid,
-      username: user.username,
-      text: commentText[postId] || "",
-      timestamp: new Date().toISOString(),
-    };
-
-    await updateDoc(postRef, { comments: [...comments, newComment] });
-    setCommentText((prev) => ({ ...prev, [postId]: "" })); // Clear input
+    try {
+      const postRef = doc(db, "posts", postId);
+      const post = await getDoc(postRef);
+      const postData = post.data();
+      const comments = postData.comments || [];
+  
+      const newComment = {
+        userId: user?.uid || "unknown",
+        username: user?.username || "Anonymous", 
+        text: commentText[postId]?.trim() || "",
+        timestamp: new Date().toISOString(),
+      };
+  
+      if (!newComment.text) {
+        console.error("Comment text is empty");
+        return;
+      }
+  
+      await updateDoc(postRef, { comments: [...comments, newComment] });
+  
+      setCommentText((prev) => ({ ...prev, [postId]: "" }));
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
+  
 
   return (
     <div className="feed-page">
@@ -65,10 +81,12 @@ const FeedPage = ({ user }) => {
           <h3>{post.username}</h3>
           <p>{post.content}</p>
 
+          {/* Render Markdown for code snippets */}
           {post.codeSnippet && (
             <ReactMarkdown>{post.codeSnippet}</ReactMarkdown>
           )}
 
+          {/* Render image if present */}
           {post.imageUrl && <img src={post.imageUrl} alt="Post attachment" />}
 
           <div className="post-actions">
